@@ -1,0 +1,215 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[margin=2cm, tmargin=1.5in, headheight=40px]{geometry}
+\usepackage[sfdefault, medium, light]{roboto}  %% Option 'sfdefault' only if the base font of the document is to be sans serif
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{minted}
+\usepackage[svgnames]{xcolor}
+\setminted{style=default,bgcolor=Gainsboro}
+\usepackage[allcolors={DarkSlateBlue}, colorlinks]{hyperref}
+
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=35px]{logoort.png}}
+\fancyhead[R]{Facultad de Ingeniería \\ Cátedra de Redes y Sistemas de Comunicación}
+\fancyfoot[R]{Página \thepage}
+\fancyfoot[L]{Redes de Datos -- Laboratorio 1}
+\renewcommand{\footrulewidth}{0.2pt}
+\renewcommand{\headrulewidth}{0.2pt}
+\renewcommand{\ttdefault}{pcr}
+
+
+\pagestyle{fancy}
+
+
+\title{\bf Redes de Datos\\Laboratorio 1 -- Capa de Aplicación}
+\author{\bf Universidad ORT Uruguay}
+\date{\bf Curso 2025}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+En este laboratorio, analizaremos cómo realizar la comunicación entre \emph{procesos} a nivel de capa de Aplicación, e implementaremos algunos de los protocolos vistos en el curso. 
+
+Para ello, utilizaremos la API que ofrece la Capa de Transporte, es decir, la posibilidad de establecer la comunicación entre un proceso cliente y el proceso servidor, para luego enviar datos sobre el mismo.
+
+Utilizaremos:
+\begin{itemize}
+    \item Scripts en lenguaje \texttt{python} para implementar la comunicación.
+    \item El software \href{http://wireshark.org}{Wireshark} para capturar y analizar el tráfico de la red.
+    \item Un \emph{servidor}, implementado como una máquina virtual (Virtual Machine, VM) que corre en el sistema host, y que tiene instalado todos los servicios. 
+\end{itemize}
+
+\section*{Preparación del ambiente}
+
+\subsection*{VM Servidor}
+
+La VM se ejecuta usando el software de virtualización \href{https://www.virtualbox.org/}{VirtualBox}. Se proporciona un archivo de tipo \texttt{.ova} que contiene la VM. Este servidor consiste en un Linux (Fedora 42 Server) con acceso por consola. El usuario administrador es \texttt{redes} con password \texttt{redes}, y dispone de otros usuarios de la forma \texttt{ort-grupo1}$\ldots$\texttt{ort-grupo4}, con password idéntico.
+
+\begin{enumerate}
+    \item Inicie VirtualBox e importe el servicio virtualizado \texttt{Servidor Redes 2025} del archivo \texttt{.ova}.
+    \item Inicie la VM en VirtualBox.
+\end{enumerate}
+
+Una vez pronto el ambiente, en su equipo va a contar con un nuevo adaptador de red el cual servirá únicamente para la comunicación entre la máquina host y la VM. Dicha interfaz, de tipo VirtualBox Host Only Network proporciona una interfaz virtual de red con las siguientes direcciones:
+\begin{itemize}
+    \item IP Host: \texttt{192.168.56.1},
+    \item IP VM (servidor): \texttt{192.168.56.2}.
+\end{itemize}
+Para visualizar el tráfico entre la máquina host y el servidor, podrá capturar paquetes utilizando Wireshark en esta interfaz virtual. A su vez, la VM cuenta también con otra interfaz de red a través de la cual se conecta a Internet.
+
+\subsection*{Scripts cliente}
+
+Descargue en la máquina host los scripts de \texttt{python} de ejemplo que se proporcionan en la \href{https://aulas.ort.edu.uy/course/view.php?id=5210}{página del curso}, y colóquelos en una carpeta de trabajo. Para ejecutar estos scripts puede utilizar:
+\begin{description}
+    \item[Windows:] \texttt{py <script> <parámetros>}
+    \item[Mac/Linux:] \texttt{python <script> <parámetros>}
+\end{description}
+
+\section*{Parte 1: Comunicación entre procesos}
+
+El objetivo de esta parte es ilustrar una comunicación básica entre procesos utilizando \emph{sockets}. El socket provee una abstracción de las capas inferiores permitiendo la comunicación. En nuestro caso utilizaremos sockets \emph{orientados a conexión} mediante el protocolo TCP.
+
+Los pasos básicos para crear un socket \emph{cliente} son:
+\begin{minted}{python}
+    from socket import * #importa la biblioteca
+    clientSocket = socket(AF_INET, SOCK_STREAM) #crea un objeto socket TCP
+    clientSocket.connect((serverHost,serverPort)) #inicia la conexión
+\end{minted}
+Aquí las variables \texttt{serverHost} y \texttt{serverPort} son la dirección IP y el puerto donde está el servidor escuchando.
+
+Una vez creado el socket podemos utilizar:
+\begin{minted}{python}
+    clientSocket.sendall(datos) #envía un stream de bytes
+    receivedBytes = clientSocket.recv(N) #recibe hasta N bytes del socket
+\end{minted}
+
+\textbf{Observación:} \mintinline{python}|clientSocket.recv(N)| bloquea la ejecución hasta recibir datos. Por ello, puede ser importante fijar un valor de \emph{timeout} de manera de que el programa no quede bloqueado esperando datos para siempre. Esto puede hacerse con \mintinline{python}|clientSocket.settimeout(t)| para limitarlo a \texttt{t} segundos.
+
+
+\begin{enumerate}
+    \item Analice el script de ejemplo \texttt{tcp\_socket\_client.py} para entender su funcionamiento.
+    \item Ingrese en la VM como administrador (\texttt{redes}), y ejecute el script de servidor:
+    \begin{minted}{bash}
+    $> python socket_examples/threaded_tcp_socket_server.py <puerto>
+    \end{minted}
+    El valor de puerto es donde el proceso queda escuchando el proceso. Los valores habilitados son 5000 a 6000.
+    \item En la máquina host, comience a capturar paquetes en Wireshark, en la interfaz de Virtualbox host-only network.
+    \item En una consola, ejecute el script \texttt{tcp\_socket\_client.py} indicando la IP y puerto donde debe conectarse.
+    \item Intercambie mensajes con el servidor y vea lo que ocurre en la captura de paquetes. Identifique los mensajes de ida y retorno. Analice la composición de los mismos. ¿Qué hace el servidor con los mensajes enviados?
+    \item Finalice con \texttt{Ctrl+C} el script y vea qué ocurre en la captura.
+    \item Inicie ahora en dos consolas diferentes el script \texttt{tcp\_socket\_client.py}, conectándose al mismo servidor y en el mismo puerto. ¿Logra que ambas funcionen simultáneamente?
+    \item ¿Cómo hace el servidor para distinguir una conexión de la otra?
+    
+\end{enumerate}
+
+\section*{Parte 2: HTTP}
+
+En esta parte intercambiaremos ahora mensajes con un servidor HTTP, mediante el protocolo visto en clase. El servidor está en la VM ya configurado y escucha en el puerto estándar de HTTP, 80. Capture el tráfico para ver los intercambios.
+
+\begin{enumerate}
+    \item Tomando como base el script \texttt{tcp\_socket\_client.py}, cree un script \texttt{http\_client.py} que realice un pedido GET de HTTP/1.0 al servidor y reciba e imprima la respuesta. ¿Logra obtener la página del laboratorio completa?
+    \item Modifique el script anterior para realizar el pedido GET por HTTP/1.1. No olvide el parámetro obligatorio \texttt{Host:<nombre>} de HTTP/1.1. Vuelva a realizar el pedido. ¿Logra respuesta? ¿Qué diferencias observa?
+    \item Vuelva a realizar el pedido de la página índice del servidor utilizando un navegador (no olvide quitar el proxy HTTP si éste está configurado). Explique las diferencias observadas. ¿Cuántos pedidos realiza el navegador? ¿Cuántos son exitosos?
+    \item Utilizando la biblioteca de \texttt{python urllib} (ver Apéndice), modifique el script anterior para que reciba una URL como parámetro y realice el GET correspondiente via HTTP/1.1. Pruebe obtener una página remota.
+\end{enumerate}
+
+\section*{Parte 3: Envío de correo}
+
+El protocolo SMTP de envío de correo visto en clase se diferencia de HTTP en que establece un \emph{diálogo} entre cliente y servidor para lograr el envío. Un ejemplo de diálogo simple SMTP puede verse en el material del curso.
+
+En la VM está configurado un servidor SMTP (Postfix) escuchando en el puerto estándar 25. Este servidor puede enviar correos entre las direcciones \texttt{ort-grupox@lab.ort.edu.uy}.
+
+\begin{enumerate}
+    \item Tomando como base el script \texttt{tcp\_socket\_client.py}, implemente un script que:
+      \begin{enumerate}
+        \item Consulte al usuario los campos de quién envía el correo, destinatario y subject, y luego el mensaje a enviar (acotado a una línea).
+        \item Establezca el socket apropiado para conectar con el servidor SMTP.
+        \item Realice el diálogo SMTP enviando y recibiendo los datos según el protocolo. No olvide incluir los campos de encabezado y mensaje dentro de los datos del correo a enviar.
+        \item Cierre la conexión SMTP y luego el socket de manera apropiada.
+      \end{enumerate}
+
+    \item Pruebe utilizar el script anterior para enviar un correo entre dos usuarios utilizando el servidor SMTP de la VM.
+    \item ¿El servidor requiere autenticación? ¿Qué puede decir sobre la seguridad de este protocolo? 
+\end{enumerate}
+
+\section*{Parte 4: Lectura de correo}
+
+Para leer el correo de la parte anterior, se proporciona el script \texttt{simple\_pop3\_client.py} que implementa un cliente básico POP3, el protocolo más simple de lectura de correos. El servidor tiene instalado un servidor POP3 (Dovecot) escuchando en el puerto estándar 110.
+
+\begin{enumerate}
+    \item Analice el script \texttt{simple\_pop3\_client.py} para comprender su funcionamiento.
+    \item Intente recuperar el o los mensajes enviados en la parte anterior utilizando POP3.
+    \item Capture los paquetes para ver el intercambio realizado. En particular observe que el password va en texto plano por la red.
+\end{enumerate}
+
+\appendix
+
+\section*{Apéndice: Comandos útiles}
+
+\subsection*{Conexión mediante sockets}
+
+Los siguientes métodos son útiles para trabajar con sockets:
+\begin{minted}{python}
+from socket import *
+
+clientSocket = socket(AF_INET, SOCK_STREAM) #crea un socket TCP
+clientSocket.settimeout(10.0) #setea el timeout en 10s
+clientSocket.connect((host,port)) #establece la conexión a host/puerto.
+clientSocket.sendall(<bytes>) #envía una cadena de bytes
+clientSocket.recv(N) #recibe hasta N bytes del socket.
+clientSocket.close() #cierra la conexión.
+\end{minted}
+
+\textbf{Nota:} \mintinline{python}|socket.recv(N)| retorna vacío cuando el otro extremo de la conexión se desconecta.
+\subsection*{Cadenas de bytes}
+
+En \texttt{python}, los sockets requieren cadenas de bytes para enviar/recibir. Pueden ser útiles los siguientes métodos:
+
+\begin{minted}{python}
+    data = b''  #crea una cadena de bytes vacía
+    data = data+nuevosDatos #agrega nuevos datos a una cadena de bytes
+
+    ##Conversión de datos
+
+    #Crear una cadena de bytes que codifica el mensaje 
+    #ingresado como string.
+    data = string.encode() 
+
+    #Decodificar una cadena de bytes en un string adecuado:
+    string = data.decode()
+\end{minted}
+
+\subsection*{Manejo de strings}
+
+\begin{minted}{python}
+    #Crear un string
+    string = "Hola mundo"
+    
+    #Concatenar strings
+    string = "Hola"+" "+"mundo"
+
+    #Caracter de retorno de linea
+    crlf = "\r\n"
+
+    #Pasar variables a strings
+    string = f"El valor de x es {x}"
+\end{minted}
+
+
+\subsection*{Lectura de URLs}
+
+\begin{minted}{python}
+    from urllib.parse import urlparse
+
+    url = urlparse(<URL>)
+    url.hostname #hostname de la URL
+    url.port #puerto de la URL, en caso de estar especificado
+    url.path #ubicación del elemento buscado dentro del hostname
+\end{minted}
+
+\end{document}
