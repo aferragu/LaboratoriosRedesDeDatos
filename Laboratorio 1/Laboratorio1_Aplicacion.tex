@@ -1,7 +1,8 @@
 \documentclass[a4paper,10pt]{article}
 
 \usepackage[margin=2cm, tmargin=1.5in, headheight=40px]{geometry}
-\usepackage[sfdefault, medium, light]{roboto}  %% Option 'sfdefault' only if the base font of the document is to be sans serif
+\usepackage[sfdefault, medium, light]{roboto}
+%\usepackage[nomap]{FiraMono}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
@@ -19,7 +20,6 @@
 \fancyfoot[L]{Redes de Datos -- Laboratorio 1}
 \renewcommand{\footrulewidth}{0.2pt}
 \renewcommand{\headrulewidth}{0.2pt}
-\renewcommand{\ttdefault}{pcr}
 
 
 \pagestyle{fancy}
@@ -67,8 +67,8 @@ Para visualizar el tráfico entre la máquina host y el servidor, podrá captura
 
 Descargue en la máquina host los scripts de \texttt{python} de ejemplo que se proporcionan en la \href{https://aulas.ort.edu.uy/course/view.php?id=5210}{página del curso}, y colóquelos en una carpeta de trabajo. Para ejecutar estos scripts puede utilizar:
 \begin{description}
-    \item[Windows:] \texttt{py <script> <parámetros>}
-    \item[Mac/Linux:] \texttt{python <script> <parámetros>}
+    \item[Windows:] \texttt{py <script> \, <parámetros>}
+    \item[Mac/Linux:] \texttt{python <script> \, <parámetros>}
 \end{description}
 
 \section*{Parte 1: Comunicación entre procesos}
