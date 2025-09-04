@@ -1,0 +1,118 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[margin=2cm, tmargin=1.5in, headheight=40px]{geometry}
+\usepackage[sfdefault, medium, light]{roboto}  %% Option 'sfdefault' only if the base font of the document is to be sans serif
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{minted}
+\usepackage[svgnames]{xcolor}
+\setminted{style=default,bgcolor=Gainsboro}
+\usepackage[allcolors={DarkSlateBlue}, colorlinks]{hyperref}
+
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=35px]{logoort.png}}
+\fancyhead[R]{Facultad de Ingeniería  Cátedra de Redes y Sistemas de Comunicación}
+\fancyfoot[R]{Página \thepage}
+\fancyfoot[L]{Redes de Datos -- Laboratorio 1}
+\renewcommand{\footrulewidth}{0.2pt}
+\renewcommand{\headrulewidth}{0.2pt}
+\renewcommand{\ttdefault}{pcr}
+
+
+\pagestyle{fancy}
+
+
+\title{\bf Redes de DatosLaboratorio 2 -- Domain Name System}
+\author{\bf Universidad ORT Uruguay}
+\date{\bf Curso 2025}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+En este laboratorio, analizaremos cómo se resuelve la búsqueda de nombres de dominio mediante el \emph{sistema de nombres de dominio} (Domain Name System, DNS).
+
+Previo a comenzar esta parte, se debe verificar que la VM se encuentre funcionando tal cual se explicó anteriormente. En esta sección del obligatorio se trabajará con la funcionalidad \texttt{nslookup}, que permite realizar consultas DNS a pedido del usuario.
+
+Para ello primero se debe configurar el servidor que utiliza \texttt{nslookup}
+
+\begin{minted}{batch}
+
+C:\Users\Usuario> nslookup
+ Servidor predeterminado: 8.8.8.8
+ Address: 8.8.8.8
+
+> server 192.168.56.2
+ Servidor predeterminado: 192.168.56.2
+ Address: 192.168.56.2
+
+\end{minted}
+
+Luego de esto, las consultas DNS que se realicen con esta instancia de nslookup, se ejecutarán contra el servidor instalado en la VM.  
+
+A continuación, inicie el analizador de tráfico Wireshark. 
+
+\subsection*{Consultas al DNS local}
+
+Para esta parte de la práctica se debe capturar el tráfico de la interfaz ``Virtual Box host-only network''.
+
+\begin{enumerate}
+    \item Comience la captura y realice, desde su máquina host, una consulta DNS por un registro A usando el comando nslookup.
+    \item Observe el intercambio entre la máquina host y el servidor DNS local de la máquina virtual.
+    \item ¿Se resuelve la consulta? ¿Cuánto demora el proceso?
+    \item Si repite la misma consulta, ¿se logra resolver en menos tiempo? ¿Por qué?
+\end{enumerate}
+
+\subsection*{Resolución del DNS global}
+
+En esta segunda parte, es importante capturar el tráfico en 2 interfaces al mismo tiempo: la interfaz local ``Virtual Box host-only network'' y la interfaz que esté usando la PC para salir a Internet (puede elegir varias interfaces usando CTRL). La idea es ahora observar las consultas adicionales que realiza el DNS local de la VM para resolver la consulta inicial, actuando de manera recursiva.
+
+\begin{enumerate}
+    \item Ingrese como administrador (\texttt{redes}, password \texttt{redes}) y utilice el comando:
+    \begin{minted}{batch}
+$> sudo systemctl restart named
+    \end{minted}
+    Esto permite reiniciar el DNS local y en particular borrar el caché. Puede repetir este comando las veces que lo necesite.
+
+    \item Realice nuevamente, desde la máquina host, una consulta DNS por un registro A usando el comando nslookup. Elija un sitio que no haya sido utilizado recientemente (o borre el caché) tratando de comenzar el intercambio de tráfico contra algún root servers.
+    
+    \item Analice en wireshark el intercambio requerido para resolver la consulta. Identifique en particular:
+    \begin{enumerate}
+        \item El root-server utilizado.
+        \item Todos los servidores de nombres de dominio por los que pasa la consulta.
+        \item Cómo se produce la redirección de un servidor al siguiente (registros NS).
+        \item Si el servidor final contesta de manera autoritativa al DNS local.
+    \end{enumerate}
+    
+    Puede ser necesario aplicar filtros en Wireshark para lograr reducir la cantidad de paquetes visualizados (por ejemplo \texttt{tcp.port==53 || udp.port==53}). Tener en cuenta que existe una gran cantidad de tráfico que se cursa habitualmente por la conexión utilizada por el PC para acceder a Internet.
+
+    \item Reinicie la captura de Wireshark (puede guardar la anterior si así lo desea). Realice la misma consulta DNS y analice nuevamente el intercambio en Wireshark. ¿El servidor contesta de caché? ¿Cómo distingue si la respuesta es de caché o no? Detalle las diferencias con el caso anterior. Indique al menos 2 (dos) formas de darse cuenta.
+    
+    \item ¿Cuál es el comando para encontrar los servidores autoritativos del dominio \url{com.uy}? Realice la consulta y verifique cuales son.
+    
+    \item Realice una consulta no recursiva, usando el registro A, correspondiente a un dominio por el cual no haya consultado anteriormente. Indique el comando utilizado y la salida obtenida. ¿Puede obtener la respuesta? ¿Por qué? 
+    \item Vuelva a realizar la consulta pero en modo recursivo. Indique el comando utilizado y la salida obtenida. ¿Puede obtener la respuesta ahora? ¿Por qué? 
+    \item Haga una consulta correspondiente a \url{www.yahoo.com} y repita inmediatamente la misma consulta. Detalle las consultas y las salidas obtenidas. Compare las respuestas y explique las diferencias. ¿Cuál es la funcionalidad de esto? ¿Es realmente efectivo? ¿Existen soluciones con mejores resultados?, indicar.
+    \end{enumerate}
+
+\subsection*{Consultas al servidor local}
+
+    \begin{enumerate}
+    \item Obtenga la dirección IP asociada al nombre \url{www.lab.ort.edu.uy}. ¿Quién responde a esta consulta de manera autoritativa?
+    
+    \item Busque cómo es posible obtener todos los dominios asociados a la dirección IP \texttt{192.168.56.2}.
+    
+    \item ¿Cuál es el  registro por el que se debe preguntar para conocer el servidor al cual podemos entregar correos para el dominio \url{lab.ort.edu.uy}? Realice la consulta.
+    
+\end{enumerate}
+
+
+%\section*{Apéndice: Comandos útiles}
+
+
+
+\end{document}
