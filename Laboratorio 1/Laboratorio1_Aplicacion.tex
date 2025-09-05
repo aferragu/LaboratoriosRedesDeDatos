@@ -148,6 +148,21 @@ Para leer el correo de la parte anterior, se proporciona el script \texttt{simpl
     \item Capture los paquetes para ver el intercambio realizado. En particular observe que el password va en texto plano por la red.
 \end{enumerate}
 
+\section*{Parte 5: SSH}
+
+En esta parte, exploraremos un protocolo seguro de consola remota: SSH (Secure SHell). Este protocolo encripta el tráfico entre cliente y servidor y escucha en el puerto 22.
+
+\begin{enumerate}
+    \item Capture el tráfico en la interfaz con la VM
+    \item Realice en la máquina host una conexión de consola remota mediante SSH utilizando un cliente adecuado, por ejemplo:
+     \begin{description}
+        \item[Windows] \texttt{putty.exe}.
+        \item[Mac, Linux] Ejecutar \texttt{ssh redes@192.168.56.2} en la consola.
+     \end{description}
+    \item Observe el tráfico capturado y vea cómo comienza a encriptarse al avanzar la comunicación.
+\end{enumerate}
+
+
 \appendix
 
 \section*{Apéndice: Comandos útiles}
