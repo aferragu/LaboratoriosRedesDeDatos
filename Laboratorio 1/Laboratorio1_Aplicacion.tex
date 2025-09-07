@@ -184,7 +184,7 @@ clientSocket.close() #cierra la conexión.
 \textbf{Nota:} \mintinline{python}|socket.recv(N)| retorna vacío cuando el otro extremo de la conexión se desconecta.
 \subsection*{Cadenas de bytes}
 
-En \texttt{python}, los sockets requieren cadenas de bytes para enviar/recibir. Pueden ser útiles los siguientes métodos:
+En \texttt{python}, los sockets reciben cadenas de bytes para enviar/recibir. Pueden ser útiles los siguientes métodos:
 
 \begin{minted}{python}
     data = b''  #crea una cadena de bytes vacía
@@ -192,10 +192,9 @@ En \texttt{python}, los sockets requieren cadenas de bytes para enviar/recibir. 
 
     ##Conversión de datos
 
-    #Crear una cadena de bytes que codifica el mensaje 
-    #ingresado como string.
-    data = string.encode() 
-
+    #Crear una cadena de bytes que codifica el mensaje ingresado como string.
+    data = string.encode()
+    
     #Decodificar una cadena de bytes en un string adecuado:
     string = data.decode()
 \end{minted}
