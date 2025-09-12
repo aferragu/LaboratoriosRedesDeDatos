@@ -2,7 +2,7 @@
 
 \usepackage[margin=2cm, tmargin=1.5in, headheight=40px]{geometry}
 \usepackage[sfdefault, medium, light]{roboto}
-\usepackage[nomap]{FiraMono}
+%\usepackage[nomap]{FiraMono}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
@@ -14,8 +14,8 @@
 \usepackage[allcolors={DarkSlateBlue}, colorlinks]{hyperref}
 
 \fancyhf{}
-\fancyhead[L]{\includegraphics[height=35px]{logoort.png}}
-\fancyhead[R]{Facultad de Ingeniería  Cátedra de Redes y Sistemas de Comunicación}
+\fancyhead[L]{\includegraphics[height=35px]{../figuras/logoort.png}}
+\fancyhead[R]{Facultad de Ingeniería \\ Cátedra de Redes y Sistemas de Comunicación}
 \fancyfoot[R]{Página \thepage}
 \fancyfoot[L]{Redes de Datos -- Laboratorio 1}
 \renewcommand{\footrulewidth}{0.2pt}
@@ -35,29 +35,26 @@
 
 En este laboratorio, analizaremos cómo se resuelve la búsqueda de nombres de dominio mediante el \emph{sistema de nombres de dominio} (Domain Name System, DNS).
 
-Previo a comenzar esta parte, se debe verificar que la VM se encuentre funcionando tal cual se explicó anteriormente. En esta sección del obligatorio se trabajará con la funcionalidad \texttt{nslookup}, que permite realizar consultas DNS a pedido del usuario.
-
-Para ello primero se debe configurar el servidor que utiliza \texttt{nslookup}
+Previo a comenzar esta parte, se debe verificar que la VM se encuentre funcionando tal cual se explicó anteriormente. En esta sección del obligatorio se trabajará con la funcionalidad \texttt{nslookup}, que permite realizar consultas DNS a pedido del usuario. Para ello primero se debe configurar el servidor que utiliza \texttt{nslookup} para que utilice el servidor DNS local que provee la VM.
 
 \begin{minted}{batch}
 
 C:\Users\Usuario> nslookup
- Servidor predeterminado: 8.8.8.8
- Address: 8.8.8.8
+ Servidor predeterminado: 8.8.8.8 (depende de la máquina)
+ Address: 8.8.8.8  (depende de la máquina)
 
 > server 192.168.56.2
  Servidor predeterminado: 192.168.56.2
  Address: 192.168.56.2
 
+> set nosearch
 \end{minted}
 
-Luego de esto, las consultas DNS que se realicen con esta instancia de nslookup, se ejecutarán contra el servidor instalado en la VM.  
-
-A continuación, inicie el analizador de tráfico Wireshark. 
+Luego de esto, las consultas DNS que se realicen con esta instancia de nslookup, se ejecutarán contra el servidor instalado en la VM. El comando \texttt{set nosearch} es para evitar que el \texttt{nslookup} realice búsquedas adicionales con el nombre de dominio por defecto de su máquina como sufijo. De este modo se garantiza de que todas las consultas sean absolutas. Otra forma de lograr esto es indicando con \texttt{.} el final del nombre a buscar. En el apéndice se brindan algunos comandos útiles de \texttt{nslookup}.
 
 \subsection*{Consultas al DNS local}
 
-Para esta parte de la práctica se debe capturar el tráfico de la interfaz ``Virtual Box host-only network''.
+Inicie el analizador de tráfico Wireshark. Para esta parte de la práctica se debe capturar el tráfico de la interfaz ``Virtual Box host-only network''.
 
 \begin{enumerate}
     \item Comience la captura y realice, desde su máquina host, una consulta DNS por un registro A usando el comando nslookup.
@@ -91,27 +88,43 @@ $> sudo systemctl restart named
 
     \item Reinicie la captura de Wireshark (puede guardar la anterior si así lo desea). Realice la misma consulta DNS y analice nuevamente el intercambio en Wireshark. ¿El servidor contesta de caché? ¿Cómo distingue si la respuesta es de caché o no? Detalle las diferencias con el caso anterior. Indique al menos 2 (dos) formas de darse cuenta.
     
-    \item ¿Cuál es el comando para encontrar los servidores autoritativos del dominio \url{com.uy}? Realice la consulta y verifique cuales son.
+    \item ¿Cuál es el comando para encontrar los servidores autoritativos del dominio \texttt{com.uy}? Realice la consulta y verifique cuáles son.
     
     \item Realice una consulta no recursiva, usando el registro A, correspondiente a un dominio por el cual no haya consultado anteriormente. Indique el comando utilizado y la salida obtenida. ¿Puede obtener la respuesta? ¿Por qué? 
     \item Vuelva a realizar la consulta pero en modo recursivo. Indique el comando utilizado y la salida obtenida. ¿Puede obtener la respuesta ahora? ¿Por qué? 
-    \item Haga una consulta correspondiente a \url{www.yahoo.com} y repita inmediatamente la misma consulta. Detalle las consultas y las salidas obtenidas. Compare las respuestas y explique las diferencias. ¿Cuál es la funcionalidad de esto? ¿Es realmente efectivo? ¿Existen soluciones con mejores resultados?, indicar.
+    \item Haga una consulta correspondiente a \texttt{www.yahoo.com} y repita inmediatamente la misma consulta. Detalle las consultas y las salidas obtenidas. Compare las respuestas y explique las diferencias. ¿Cuál es la funcionalidad de esto? ¿Es realmente efectivo? ¿Existen soluciones con mejores resultados?, indicar.
     \end{enumerate}
 
 \subsection*{Consultas al servidor local}
 
     \begin{enumerate}
-    \item Obtenga la dirección IP asociada al nombre \url{www.lab.ort.edu.uy}. ¿Quién responde a esta consulta de manera autoritativa?
+    \item Obtenga la dirección IP asociada al nombre \texttt{www.lab.ort.edu.uy}. ¿Quién responde a esta consulta de manera autoritativa?
     
     \item Busque cómo es posible obtener todos los dominios asociados a la dirección IP \texttt{192.168.56.2}.
     
-    \item ¿Cuál es el  registro por el que se debe preguntar para conocer el servidor al cual podemos entregar correos para el dominio \url{lab.ort.edu.uy}? Realice la consulta.
+    \item ¿Cuál es el  registro por el que se debe preguntar para conocer el servidor al cual podemos entregar correos para el dominio \texttt{lab.ort.edu.uy}? Realice la consulta.
     
 \end{enumerate}
 
+\newpage
 
-%\section*{Apéndice: Comandos útiles}
+\section*{Apéndice: comandos de nslookup}
 
+
+\begin{minted}{bash}
+
+> <nombre de dominio>           (realiza una consulta por el nombre de dominio
+                                 dado al servidor por defecto)
+> <nombre de dominio> <IP>      (realiza una consulta por el nombre de dominio 
+                                 al servidor situado en IP)
+> server <IP DNS local>         (setea el servidor por defecto)
+> <IP>                          (realiza una búsqueda reversa en el árbol usando PTR)
+> set type=X                    (setea el tipo de registro a buscar, A, MX, etc.)
+> set nosearch                  (evita que agregue sufijos al dominio)
+> set debug                     (agrega información de debug a la salida)
+> set [no]recurse               (permite hacer o evitar las consultas recursivas)
+> set all                       (muestra la configuración actual)
+\end{minted}
 
 
 \end{document}
