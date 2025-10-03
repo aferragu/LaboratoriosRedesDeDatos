@@ -1,0 +1,138 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[margin=2cm, tmargin=1.5in, headheight=40px]{geometry}
+\usepackage[sfdefault, medium, light]{roboto}
+%\usepackage[nomap]{FiraMono}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{minted}
+\usepackage[svgnames]{xcolor}
+\setminted{style=default,bgcolor=Gainsboro}
+\usepackage[allcolors={DarkSlateBlue}, colorlinks]{hyperref}
+
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=35px]{../figuras/logoort.png}}
+\fancyhead[R]{Facultad de Ingeniería \\ Cátedra de Redes y Sistemas de Comunicación}
+\fancyfoot[R]{Página \thepage}
+\fancyfoot[L]{Redes de Datos -- Laboratorio 3}
+\renewcommand{\footrulewidth}{0.2pt}
+\renewcommand{\headrulewidth}{0.2pt}
+
+\pagestyle{fancy}
+
+
+\title{\bf Redes de Datos\\Laboratorio 3 -- Capa de Transporte}
+\author{\bf Universidad ORT Uruguay}
+\date{\bf Curso 2025}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+En este laboratorio, analizaremos el protocolo de capa de Transporte TCP, utilizado para ofrecer un servicio orientado a conexión y confiable para la comunicación entre procesos. Estudiaremos el uso de números de secuencia y reconocimiento para mantener el orden y recuperarse ante pérdidas, el uso de otros encabezados TCP (window size), el multiplexado de diferentes conexiones, así como la respuesta de TCP a fallos en el canal de transmisión.
+
+Antes de comenzar la práctica deberá:
+\begin{itemize}
+    \item Iniciar VirtualBox y la VM servidor del curso.
+    \item Si desea ver los números \emph{absolutos} de secuencia TCP (nos. de 32 bits completos) en Wireshark, antes de comenzar a capturar debe quitar la opción ``Relative Sequence Numbers anb Window Scaling'' en el menú \emph{Edit/Preferences/Protocols/TCP}.
+    \item Asegurarse de que su máquina no esté utilizando un Proxy HTTP.
+\end{itemize}
+
+\section{Análisis de mensajes y secuencia TCP}
+
+\begin{enumerate}
+    \item Inicie una captura de tráfico entre la máquina host y la VM servidor en la host-only network. Acceda mediante el navegador a la página del servidor \texttt{http://192.168.56.2}). Luego de obtenida la página, detenga la captura.
+    
+    \item Identifique el establecimiento de conexión, quién inicia la misma, los números de secuencia (SEQ) inicial de ambas partes, los números de reconocimiento (ACK), el largo del segmento, como así también qué banderas van activas durante la secuencia de segmentos intercambiados.
+    
+    \item Identifique la finalización de la conexión, quién inicia el mismo, la secuencia de segmentos intercambiados indicando: los números de SEQ y ACK, como así también banderas activas y largo de segmentos.
+    
+    \item Analice el intercambio request/response HTTP realizado una vez que la conexión está activa. Puede utilizar la opción Analyze/Follow/Follow TCP Stream de Wireshark para ayudarse. ¿Cuántos pedidos HTTP se realizan sobre la misma conexión? ¿Qué respuestas se obtienen?
+    
+    \item Analizando la captura realizada. ¿En qué momento se incrementan los números de secuencia y en qué valor lo hacen?.
+
+    \item Analizando los números de secuencia. ¿Puede deducir cuántos bytes fueron enviados en cada sentido? 
+    
+    \item ¿Puede observar en algún momento la bandera PSH en TCP? ¿Para qué se utiliza?
+    
+    \item Si una parte de la comunicación desea enviar solamente un reconocimiento y no datos. ¿Cuál número de secuencia debe enviar?
+    
+    \item Capture nuevamente e intente acceder ahora a la dirección del servidor pero en el puerto 443, utilizando la URL \texttt{http://192.168.56.2:443}. ¿Logra conectarse? ¿Por qué sucede esto? ¿Qué bandera se utiliza para señalizar esto?
+
+\end{enumerate}
+
+\section{Análisis de las conexiones activas}
+
+\begin{enumerate}
+    \item Ejecute el comando \texttt{netstat –na} desde una consola de Windows. Detalle brevemente la salida observada.
+    \item ¿Qué significan los estados ``ESTABLISHED'' y ``LISTENING'' que observa?.
+    \item ¿Describa además que significa el estado ``TIME-WAIT''.
+    \item Establezca una conexión Telnet al servidor en otra consola utilizando:
+    \begin{minted}{batch}
+> telnet 192.168.56.2
+    \end{minted}
+    y ejecute nuevamente el comando \texttt{netstat –na}. Observe la nueva conexión en la salida.
+\end{enumerate}
+
+\section{Throughput de una conexión TCP}
+
+En esta sección se estudiará cómo la capacidad de transferir datos del protocolo TCP es afectada por las características del enlace utilizado.
+
+Para ello se utilizará el programa de línea de comandos de Linux \texttt{tc}. Este programa permite degradar la comunicación entre la VM Linux (donde residen los servidores HTTP, FTP, DNS, Telnet, SSH) y el sistema operativo anfitrión, de una forma conocida y controlada.
+
+\begin{enumerate}
+
+    \item Se comenzará estudiando la transferencia sobre un enlace con las siguientes características:
+    \begin{itemize}
+        \item Ancho de banda: 10 Mbps (Mega-bits por segundo)
+        \item Retardo: 50 ms (milisegundos)
+    \end{itemize}
+    Para obtener esto, ingrese a la VM, con el usuario y contraseña \texttt{redes}, y ejecute la siguiente línea en la terminal de línea de comandos de la VM Linux:
+    \begin{minted}{bash}
+$> ./enlace1.sh
+    \end{minted}
+
+    \item Descargue el archivo del servidor mediante HTTP ubicado en la URL:
+    
+    \texttt{http://192.168.56.2/archivogrande.zip}.
+    
+    \item Inicie una nueva captura y comience a descargar el archivo. En la captura identifique el comienzo y el fin de conexión y el número de secuencia inicial y final. Indique:
+    \begin{enumerate}
+        \item La cantidad de bytes enviados.
+        \item El tiempo transcurrido.
+        \item Con los datos anteriores, calcule el throughput en Mbps y compárelo con el configurado como límite del enlace.
+    \end{enumerate}
+
+    \item Seleccione el flujo TCP relativo a la descarga. Usando la opción de \emph{Wireshark Statistics/TCP Stream Graph/ time-sequence graph (Stevens)}, observe la evolución del número de secuencia en función del tiempo y verifique el cálculo anterior.
+    
+    \item Se pasará ahora a utilizar un enlace con las siguientes características:
+        \begin{itemize}
+        \item Ancho de banda: 10 Mbps
+        \item Retardo: 50 ms
+        \item Tasa de pérdida de paquetes: 0.5\%
+        \end{itemize}
+
+Para obtener esto, ejecute la siguiente línea en la terminal de línea de comandos de la VM Linux:
+   \begin{minted}{bash}
+$> ./enlace2.sh
+    \end{minted}
+
+Repita ahora las pruebas de descarga. Identifique:
+\begin{itemize}
+    \item Los eventos de pérdida y cómo se repone TCP ante ellos. ¿Cuánto tiempo necesita para recuperar?
+    \item ¿Qué ocurre con la ventana de transmisión de TCP ante una pérdida?
+    \item ¿Cuál es el efecto neto de las pérdidas aleatorias en el throughput? Calcule para este caso y compare con el caso sin pérdidas analizado antes.
+\end{itemize} 
+\end{enumerate}
+
+
+\textbf{Nota:} para liberar el enlace de las limitaciones de ancho de banda y pérdidas puede utilizar el siguiente comando en la VM:
+\begin{minted}{bash}
+$> ./liberar_enlace.sh
+\end{minted}
+
+\end{document}
