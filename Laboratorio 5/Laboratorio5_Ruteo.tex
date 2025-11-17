@@ -112,11 +112,43 @@ donde X es el no. de router.
     \item Chequee conectividad con el Router mediante \texttt{ping}. ¿Puede llegar más allá?
 \end{enumerate}
 
-\section{Ruteo dinámico intra-red: OSPF}
+\section{Ruteo dinámico intra-red: OSPF}\label{sec:ospf1}
+
+\begin{enumerate}
+    \item Configure OSPF en todos los routers. Asegúrese de que el protocolo quede activo
+en todas las interfaces. Utilice el número de área \texttt{2} si se encuentra en la red \texttt{192.168.100.0/22} y \texttt{2} si está en \texttt{192.168.200.0/22}.
+
+    \item Verifique que el Router logra aprender todos los rangos de su topología. ¿Qué distancia administativa asigna? ¿Qué significa esto? ¿Cuál es la métrica de la ruta?
+    
+    \item Verifique que ahora puede alcanzar toda la red de su anillo desde cualquier PC.
+    
+    \item Pruebe cambiar ahora el parámetro \texttt{bandwidth} de una interfaz para ver el efecto en la métrica.
+    
+    \item Coordine con sus compañeros para desconectar una interfaz. ¿Cuánto demora el protocolo en reaccionar al cambio y recalcular las rutas? ¿Por qué?
+\end{enumerate}
+
+\section{Ruteo dinámico intra-red: OSPF y áreas}
+
+Para esta parte, conectaremos ambos anillos entre sí mediante un enlace ``backbone'' (\texttt{area 0}).
+
+\begin{enumerate}
+    \item Coordine con su equipo cuál será el router de salida de su anillo. Conéctelo con el correspondiente al otro anillo utilizando una interfaz Ethernet.
+    \item Configure las interfaces para usar el rango de direcciones \texttt{192.168.1.0/30} en dicho enlace.
+    \item Habilite OSPF para la nueva red (solo en el router de salida), utilizando el área \texttt{area 0}.
+    \item Verifique la nueva tabla de rutas del Router. ¿Logra llegar a toda la red? ¿Cómo se indican las nuevas rutas?
+    \item Habilite la sumarización por áreas en los routers del backbone. ¿Qué cambia?
+    \item ¿Cuál es la ventaja de utilizar áreas en OSPF?
+\end{enumerate}
 
 \section{Ruteo dinámico externo: BGP}
 
+En esta parte, simularemos que cada anillo corresponde a un ISP diferente, y que intercambian información de ruteo mediante BGP, que es un protocolo de pasarela exterior. Antes de comenzar esta parte, \textbf{deshabilite OSPF en el enlace de backbone} de manera de volver a la situación de la sección \ref{sec:ospf1}.
 
+\begin{enumerate}
+    \item Habilite el intercambio BGP entre los routers que conectan ambos anillos.
+    \item Una vez establecido, ¿logra ver toda la red desde los routers? ¿Por qué?
+    \item Habilite la redistribución de rutas entre ambos protocolos. Verifique que ahora sí es posible acceder a toda la red.
+\end{enumerate}
 \appendix
 
 \section{Comandos Cisco}
@@ -126,11 +158,9 @@ donde X es el no. de router.
 \begin{itemize}
     \item Ingresar al modo administrador:
 \mintinline{batch}{RTRX> enable}
-    \item Mostrar la configuración actual:
-    \mintinline{batch}{RTRX# show running-config}
+    \item Mostrar la configuración actual: \mintinline{batch}{RTRX# show running-config}
     \item Mostrar las interfaces (resumen): \mintinline{batch}{RTRX# show ip interface brief}
-    \item Mostrar la tabla de rutas:
-    \mintinline{batch}{RTRX# show ip route}
+    \item Mostrar la tabla de rutas: \mintinline{batch}{RTRX# show ip route}
     \item Entrar al modo configuración: \mintinline{batch}{RTRX# configure terminal}
     \item Entrar a la conf. de interfaz (ej: FastEthernet 0/0): \mintinline{batch}{RTRX(config)# interface FastEthernet 0/0}
     \item Asignar IP a una interfaz: \mintinline{batch}{RTRX(config-if)# ip address <IP> <mascara>}
@@ -145,8 +175,42 @@ donde X es el no. de router.
 
 \textbf{Comandos OSPF}
 
+\begin{itemize}
+    \item Habilitar OSPF \mintinline{batch}{RTRX#(config)> router ospf <num_proceso>}
+    \item Agregar redes a la topología OSPF: 
+    
+    \mintinline{batch}{RTRX(config-router)# network <IP_red> <wildcard> area <num_area>}
+    
+    Se deben agregar una por una todas las redes en que se desee utilizar. \texttt{wildcard} es el complemento a 1 de la máscara, utilizado por razones históricas. Ejemplo: máscara \texttt{255.255.255.192} $\mapsto$ wildcard \texttt{0.0.0.63}.
+
+    \item Habilitar sumarización por área: \mintinline{batch}{RTRX(config-router)# area <num_area> range <IP_red> <mask>}
+    
+    Esto debe hacerse sólo en los routers intra-área.
+
+    \item Mostrar información de OSPF: \mintinline{batch}{RTRX# show ip ospf database}
+    
+    \item Redistribuir rutas de otro protocolo: \mintinline{batch}{RTRX(config-router)# redistribute <protocol> <id>}
+
+\end{itemize}
 
 \textbf{Comandos BGP}
+
+\begin{itemize}
+    \item Habilitar BGP \mintinline{batch}{RTRX#(config)> router bgp <num_AS>}
+    \item Definir identificador BGP \mintinline{batch}{RTRX#(config-router)> bgp router-id <IP>}
+    \item Establecer una vecindad BGP: 
+    
+    \mintinline{batch}{RTRX(config-router)#neighbor <IP_remota> remote-as <num_AS_remoto>}
+    
+    \item Resumir tablas de rutas: \mintinline{batch}{RTRX(config-router)# auto-summary}
+    
+    \item Mostrar información de BGP: \mintinline{batch}{RTRX# show ip bgp}
+
+    \item Redistribuir rutas de otro protocolo:
+    
+    \mintinline{batch}{RTRX(config-router)# redistribute <protocol> <id> metric <default_metric>}
+    
+\end{itemize}
 
 
 \end{document}
