@@ -1,0 +1,152 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[margin=2cm, tmargin=1.5in, headheight=40px]{geometry}
+\usepackage[sfdefault, medium, light]{roboto}
+%\usepackage[nomap]{FiraMono}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{minted}
+\usepackage[svgnames]{xcolor}
+\setminted{style=default,bgcolor=Gainsboro}
+\usepackage[allcolors={DarkSlateBlue}, colorlinks]{hyperref}
+
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=35px]{../figuras/logoort.png}}
+\fancyhead[R]{Facultad de Ingeniería \\ Cátedra de Redes y Sistemas de Comunicación}
+\fancyfoot[R]{Página \thepage}
+\fancyfoot[L]{Redes de Datos -- Laboratorio 3}
+\renewcommand{\footrulewidth}{0.2pt}
+\renewcommand{\headrulewidth}{0.2pt}
+
+\pagestyle{fancy}
+
+
+\title{\bf Redes de Datos\\Laboratorio 5 -- Capa de Red\\ Ruteo dinámico}
+\author{\bf Universidad ORT Uruguay}
+\date{\bf Curso 2025}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+En este laboratorio trabajaremos a nivel de Capa de Red, utilizando equipos Cisco disponibles en el Laboratorio. Los objetivos son continuar a partir de lo trabajado en el Laboratorio 4, implementando \textbf{ruteo dinámico}. En particular:
+
+\begin{itemize}
+    \item Configuraremos una topología dada, con sus interfaces y direcciones.
+    \item Implementaremos ruteo dinámico para ver cómo se completan las tablas de ruteo de la topología.
+    \item Interconectaremos las topologías para armar una red simulando la red de un ISP grande, o la interconexión de dos ISP.
+\end{itemize}
+
+Nuevamente, disponemos en el laboratorio de Routers pre-cableados en topología de anillo, utilizando enlaces \textbf{seriales} punto a punto. Los routers disponen además de interfaces \textbf{Ethernet} (FastEthernet o GigabitEthernet, según el modelo). Sin embargo, los routers inicialmente tienen todas sus interfaces apagadas y sin configurar.
+
+La topología base del laboratorio es la siguiente:
+
+\bigskip
+
+\begin{center}
+    \includegraphics[width=0.85\textwidth]{../figuras/topologia_lab.png}
+\end{center}
+
+Durante la práctica, cada grupo se encargará de configurar \emph{un único router} y su LAN asociada. Sin embargo, debe coordinar con sus compañeros para que la asignación de direcciones y rutas sea \emph{coherente}.
+
+\vfill
+
+\section{Configuración de interfaces}
+
+\begin{enumerate}
+    \item Retome la asignación de direcciones del Laboratorio 4 para su topología, utilizando para ello el rango de IPs \texttt{192.168.100.0/23} o bien \texttt{192.168.200.0/23}, de acuerdo al anillo que se encuentre.
+    \item Configure cada una de las interfaces de su router, coordinando con los demás routers de su anillo.
+    \item Verifique que:
+    \begin{enumerate}
+        \item Su tabla de ruteo (\mintinline{batch}{RTRX> show ip route}) quedó adecuadamente configurada \emph{solo con las interfaces directamente conectadas}.
+        \item Verifique conectividad con sus routers vecinos (\mintinline{batch}{RTRX> ping <IP>}).
+    \end{enumerate}
+
+Puede usar la siguiente tabla para registrar la asignación:
+
+    \begin{center}
+        \bigskip
+        \begin{tabular}{|p{1cm}|p{3cm}|p{3cm}|p{3cm}|}
+            \hline
+            \textbf{Red} & \textbf{Dirección de red} & \textbf{Máscara} & \textbf{IP Router} \\ \hline
+            \textbf{LAN A} & & & \\ \hline
+            \textbf{LAN B} & & & \\ \hline
+            \textbf{LAN C} & & & \\ \hline
+            \textbf{LAN D} & & & \\ \hline
+        \end{tabular}
+    \end{center}
+
+    \bigskip
+    \begin{center}
+        \begin{tabular}{|p{2cm}|p{3cm}|p{3cm}|p{3cm}|p{3cm}|}
+            \hline
+            \textbf{Enlace} & \textbf{Dirección de red} & \textbf{Máscara} & \textbf{IP Router A} & \textbf{IP Router B} \\ \hline
+            \textbf{RTR1--RTR2} & & & & \\ \hline
+            \textbf{RTR2--RTR3} & & & & \\ \hline
+            \textbf{RTR3--RTR4} & & & & \\ \hline
+            \textbf{RTR4--RTR1} & & & & \\ \hline
+        \end{tabular}
+    \bigskip
+    \end{center}
+
+\end{enumerate}
+
+\textbf{Nota:} Recuerde que para acceder al router puede utilizar el equipo remotizador de consola disponible en el laboratorio, mediante:
+\begin{minted}{batch}
+> telnet 172.20.20.24
+> Login: grupoX
+> Password: ort
+\end{minted}
+donde X es el no. de router.
+
+\section{Conexión de máquinas de usuario}
+
+\begin{enumerate}
+    \item Implemente la red local conectando un Switch a la interfaz Ethernet del router. Verifique que ahora la misma queda activa.
+    \item Conecte su máquina del laboratorio a dicha red mediante un patch-cord adecuado, utilizando la tarjeta de red secundaria de la máquina.
+    \item Configure la dirección IP, máscara y puerta de enlace predeterminada de su máquina para que quede conectada a la LAN adecuada.
+    \item Chequee conectividad con el Router mediante \texttt{ping}. ¿Puede llegar más allá?
+\end{enumerate}
+
+\section{Ruteo dinámico intra-red: OSPF}
+
+\section{Ruteo dinámico externo: BGP}
+
+
+\appendix
+
+\section{Comandos Cisco}
+
+\textbf{Comandos básicos:}
+
+\begin{itemize}
+    \item Ingresar al modo administrador:
+\mintinline{batch}{RTRX> enable}
+    \item Mostrar la configuración actual:
+    \mintinline{batch}{RTRX# show running-config}
+    \item Mostrar las interfaces (resumen): \mintinline{batch}{RTRX# show ip interface brief}
+    \item Mostrar la tabla de rutas:
+    \mintinline{batch}{RTRX# show ip route}
+    \item Entrar al modo configuración: \mintinline{batch}{RTRX# configure terminal}
+    \item Entrar a la conf. de interfaz (ej: FastEthernet 0/0): \mintinline{batch}{RTRX(config)# interface FastEthernet 0/0}
+    \item Asignar IP a una interfaz: \mintinline{batch}{RTRX(config-if)# ip address <IP> <mascara>}
+    
+    donde la IP y la máscara van en formato decimal separadas por puntos.
+    \item Encender una interfaz: \mintinline{batch}{RTRX(config-if)# no shutdown}
+    \item Asignar IP de broadcast: \mintinline{batch}{RTRX(config-if)# ip broadcast-address <IP>}
+    \item Crear una ruta estática: \mintinline{batch}{RTRX(config)# ip route <dir. Red> <máscara> <nextHop>}
+    \item Salir de un submenú: \mintinline{batch}{RTRX(config)# exit}
+
+\end{itemize}
+
+\textbf{Comandos OSPF}
+
+
+\textbf{Comandos BGP}
+
+
+\end{document}
